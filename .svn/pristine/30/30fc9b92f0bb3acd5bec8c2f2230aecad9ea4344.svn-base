@@ -1,0 +1,278 @@
+package edu.wm.cs.cs301.chaoranwei.falstad;
+
+
+import java.util.HashSet;
+import java.util.Set;
+
+import edu.wm.cs.cs301.chaoranwei.falstad.Robot.Direction;
+import edu.wm.cs.cs301.chaoranwei.falstad.Robot.Turn;
+import edu.wm.cs.cs301.chaoranwei.ui.PlayActivity;
+
+import java.util.Collections;
+
+
+public class CuriousMouse implements RobotDriver {
+
+	private Maze maze;
+	private Robot robot;
+	private int Width, Height;
+	private int[][] marker;
+	private int steps = 0;
+	private boolean hitted;
+	private Distance dist;
+	private PlayActivity play;
+	
+	public CuriousMouse() {
+		super();
+	}
+	
+	public void setActivity(PlayActivity p) {
+		play = p;
+	}
+	
+	/**Set robot to the driver
+	 */
+	@Override
+	public void setRobot(Robot r) {
+		robot = r;
+		robot.setBatteryLevel(2500);
+		maze = robot.getMaze();
+	}
+	
+	
+	public int setSteps(int x){
+		return steps = x;
+	}
+	public Distance getDistance(){
+		return dist;
+	}
+
+
+	/*
+	 * Marker is a private field, method getMarker returns the marker (keep track of visited cells) 
+	 */
+	public int[][] getMarker(){
+		return marker;
+	}
+	/*
+	 * Width is a private field, method getWidth returns the width 
+	 */
+	public int getWidth(){
+		return Width;
+	}
+	
+	/*
+	 * Height is a private field, method getWidth returns the height
+	 */
+	public int getHeight(){
+		return Height;
+	}
+	
+	/*
+	 * maze is a private field, method getMaze returns the maze reference
+	 */
+	public Maze getMaze(){
+		return maze;
+	}
+	
+	/*
+	 * robot is a private field, method getMaze returns the robot reference 
+	 */
+	public Robot getRobot(){
+		return robot;
+	}
+	/**Set dimension of the maze driver operates on
+	 */
+	public void setDimensions(int width, int height) {
+		Width = width;
+		Height = height;
+		marker = new int[Width][Height];
+		for (int i = 0 ; i < Width ; i++){
+			for (int j = 0; j<Height; j++){
+				marker[i][j] = 0;
+			}
+		}
+	}
+
+	/**set distance matrix of the maze driver operates on
+	 */
+	@Override
+	public void setDistance(Distance distance) {
+		dist = distance;
+	}
+
+	/**drive to exit by assignment of probability of all four directions biased towards unvisited places
+	 */
+	@Override
+	public boolean drive2Exit() throws Exception {
+		//while (!robot.isAtGoal()){
+			play.finishGame();
+	    	play.energythread.run();
+	    	//play.driverHandler.postDelayed(play.DriverRunnable, 200);
+			if (robot.hasStopped()){
+				initializeLose();
+				if (robot.getBatteryLevel() <= 0) { 
+					throw new Exception("Robot runs out of battery.");
+				} else 
+				{hitted = true;
+				throw new Exception("Robot hits the wall.");}
+			}
+			if (robot.hasStopped()){
+				return false;
+			}
+			steps = steps + 1;
+			double forward = 0, backward = 0, right = 0, left = 0;
+			try {
+			forward = (robot.distanceToObstacle(Direction.FORWARD) != 0) ? 1:0;
+			backward = (robot.distanceToObstacle(Direction.BACKWARD) != 0) ? 1:0;
+			right = (robot.distanceToObstacle(Direction.RIGHT) != 0) ? 1:0;
+			left = (robot.distanceToObstacle(Direction.LEFT) != 0) ? 1:0;
+			} catch (Exception e) {
+				initializeLose();
+				//break;
+			}
+			if (maze.px + maze.dx >= 0 && maze.px + maze.dx < Width && maze.py + maze.dy >= 0 && maze.py + maze.dy < Height) {
+				if (marker[maze.px + maze.dx][maze.py + maze.dy] >= 1) {
+		    		forward = forward /(1 + marker[maze.px + maze.dx][maze.py + maze.dy]);
+		    	} 
+			}
+			
+			if (maze.px - maze.dx >= 0 && maze.px - maze.dx < Width && maze.py - maze.dy >= 0 && maze.py - maze.dy < Height) {
+			    if (marker[maze.px - maze.dx][maze.py - maze.dy] >= 1) {
+	    		    backward = backward /(1+ marker[maze.px - maze.dx][maze.py - maze.dy]);
+	    	    } 
+			}
+			if (maze.px + maze.dy >= 0 && maze.px + maze.dy < Width && maze.py - maze.dx >= 0 && maze.py - maze.dx < Height) {
+			    if (marker[maze.px + maze.dy][maze.py - maze.dx] >= 1) {
+	    		    right = right /(1+ marker[maze.px + maze.dy][maze.py - maze.dx]);
+	    	    } 
+			}
+			
+			if (maze.px - maze.dy >= 0 && maze.px - maze.dy < Width && maze.py + maze.dx >= 0 && maze.py + maze.dx < Height) {
+				if (marker[maze.px - maze.dy][maze.py + maze.dx] >= 1) {
+	    			left = left/(1+ marker[maze.px - maze.dy][maze.py + maze.dx]);
+	    		} 
+			}
+			
+			Set<Double> Directions = new HashSet<Double>();
+			Directions.add(forward);
+			Directions.add(backward);
+			Directions.add(right);
+			Directions.add(left);
+			
+			for (double s : Directions) {
+			    s = s * Math.random();
+			}
+			
+			double highest = Collections.max(Directions);
+			if (highest == 0) {
+				robot.rotate(Turn.AROUND);
+				robot.move(1);
+				marker[maze.px][maze.py] += 1;
+		        return true;
+			}
+			try{
+			if (forward == highest) {
+				robot.move(1);
+			} else if (right == highest) {
+				robot.rotate(Turn.RIGHT);
+				robot.move(1);
+			} else if (left == highest) {
+				robot.rotate(Turn.LEFT);
+				robot.move(1);
+			} else if (backward == highest) {
+				robot.rotate(Turn.AROUND);
+				robot.move(1);
+			}
+			marker[maze.px][maze.py] += 1;
+			} catch (Exception e) {
+				initializeLose();
+
+			}
+
+		//}
+		play.finishGame();
+		return true;
+	}
+	
+	private void initializeLose(){
+		hitted = true;
+		maze.state=Constants.STATE_LOSE;
+		maze.notifyViewerRedraw();
+	}
+	
+	/**Get energy consumed by the driver so far
+	 */
+	@Override
+	public float getEnergyConsumption(){
+		return 2500 - robot.getBatteryLevel();
+	}
+	
+	/**Get the path length taken by driver
+	 */
+	@Override
+	public int getPathLength() {
+		return steps;
+	}
+
+	/**Controls keyboard input of the driver
+	 */
+	@Override
+	
+	public void robotKeyDown(int key) {
+
+		// if user explores maze, 
+		// react to input for directions and interrupt signal (ESCAPE key)	
+		// react to input for displaying a map of the current path or of the overall maze (on/off toggle switch)
+		// react to input to display solution (on/off toggle switch)
+		// react to input to increase/reduce map scale
+			if(robot.hasStopped()){
+				//Maze maze = robot.getMaze();
+				maze.state=Constants.STATE_LOSE;
+				maze.notifyViewerRedraw();
+				
+			}
+			switch (key) {
+			case 1004: case 'k': case '8':
+				try {
+					robot.move(1);
+					steps = steps + 1;
+				    maze.panel.invalidate();
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				break;
+			case 1006: case 'h': case '4':
+				try {
+					robot.rotate(Turn.LEFT);
+					maze.panel.invalidate();
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				break;
+			case 1007: case 'l': case '6':
+				try {
+					robot.rotate(Turn.RIGHT);
+					maze.panel.invalidate();
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				break;
+			case 1005: case 'j': case '2':
+				try {
+					robot.rotate(Turn.AROUND);
+					maze.panel.invalidate();
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				break;
+			} 
+			
+	}
+	
+	
+}

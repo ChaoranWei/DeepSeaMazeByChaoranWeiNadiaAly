@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+   <string-array name="algorithms_array">
+        <item>Eller\'s Algorithm</item>
+        <item>Prim\'s Algorithm</item>
+        <item>BackTracking</item>
+        <item>load file</item>
+    </string-array>
+    
+   <string-array name="drivers_array">
+        <item>Manual</item>
+        <item>Curious Mouse</item>
+        <item>Wizard</item>
+        <item>Wall Follower</item>
+    </string-array>
+    
+   <string-array name="perspective">
+        <item>From top</item>
+        <item>Visible walls</item>
+        <item>Show exit</item>
+    </string-array>
+    
+   <string-array name="music">
+        <item>Music On</item>
+        <item>Music Off</item>
+    </string-array>
+</resources>

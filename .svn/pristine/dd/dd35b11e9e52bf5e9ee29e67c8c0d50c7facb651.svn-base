@@ -1,0 +1,197 @@
+package edu.wm.cs.cs301.chaoranwei.ui;
+
+import java.io.IOException;
+
+import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
+import android.content.res.AssetFileDescriptor;
+import android.media.MediaPlayer;
+import android.media.Ringtone;
+import android.media.RingtoneManager;
+import android.net.Uri;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
+import edu.wm.cs.cs301.chaoranwei.falstad.Constants;
+import edu.wm.cs.cs301.chaoranwei.falstad.GlobalMaze;
+import edu.wm.cs.cs301.chaoranwei.falstad.Maze;
+import edu.wm.cs.cs301.chaoranwei.falstad.MazeFileReader;
+import edu.wm.cs.cs301.chaoranwei.falstad.MazeFileWriter;
+
+/**
+ * The class FinishActivity is for the Finish State.
+ * The finish state class responsibilities are to display the finish page and informs the user what 
+ * happened and how to restart the game, the overall energy consumption and length of path.
+ * 
+ * @author Chaoran Wei and Nadia Aly 
+ *
+ */
+public class FinishActivity extends Activity{
+	private int steps;
+	private String tag = "FinishActivity";
+	MediaPlayer player;
+	private boolean hitwall;
+	private float energy;
+	private int path;
+	
+	/**
+	 * Method Name: onCreate:
+	 * Tells the user outcome: win/lose, overall energy consumption and path length. If the robot stopped
+	 * for lack of energy or if it is broken, allow the user to save maze file for later use. The skill level
+	 * is known and internal file name is fixed. Overwrite maze if maze is previously stored at the same skill
+	 * level. 
+	 */
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.activity_finish);
+		
+		if (savedInstanceState == null) {
+		    Bundle extras = getIntent().getExtras();
+		    if(extras == null) {
+		        hitwall = false;
+		    } else {
+		        hitwall = extras.getBoolean("hitwall");
+		        energy = extras.getFloat("energy");
+		        path = extras.getInt("Path");
+		    }
+		} else {
+		    hitwall= savedInstanceState.getBoolean("hitwall");
+		}
+		
+		TextView win = (TextView)findViewById(R.id.win);
+		win.setText("You won! ");
+		
+		TextView lose = (TextView)findViewById(R.id.lose);
+		lose.setText("You run out of energy! ");
+		
+		TextView hit = (TextView)findViewById(R.id.hitwall);
+		lose.setText("You hit a wall! ");
+		if (hitwall == false && energy > 0) {
+			lose.setVisibility(View.INVISIBLE);
+			hit.setVisibility(View.INVISIBLE);
+			AssetFileDescriptor afd;
+			try {
+				afd = getAssets().openFd("win.mp3");
+				player = new MediaPlayer();
+				player.setDataSource(afd.getFileDescriptor(),afd.getStartOffset(),afd.getLength());
+				player.prepare();
+				player.start();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			Log.v(tag, "playing winning audio ");
+		} else if (energy <= 0) {
+			win.setVisibility(View.INVISIBLE);
+			hit.setVisibility(View.INVISIBLE);
+			AssetFileDescriptor afd;
+			try {
+				afd = getAssets().openFd("fail.mp3");
+				player = new MediaPlayer();
+				player.setDataSource(afd.getFileDescriptor(),afd.getStartOffset(),afd.getLength());
+				player.prepare();
+				player.start();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			Log.v(tag, "playing lost audio ");
+		} else if (hitwall == true) {
+			win.setVisibility(View.INVISIBLE);
+			lose.setVisibility(View.INVISIBLE);
+			AssetFileDescriptor afd;
+			try {
+				afd = getAssets().openFd("fail.mp3");
+				player = new MediaPlayer();
+				player.setDataSource(afd.getFileDescriptor(),afd.getStartOffset(),afd.getLength());
+				player.prepare();
+				player.start();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			Log.v(tag, "playing lost audio ");
+		}
+		
+		TextView Energy = (TextView)findViewById(R.id.energy_and_path);
+		Energy.setText("Energy consumed: " + (2500 - energy) + 
+				"\n Path length: " + path);
+		
+		Button save_maze = (Button) findViewById(R.id.save_maze);
+	    save_maze.setOnClickListener(new View.OnClickListener() {
+	    	/**
+	    	 * Method Name: onClick
+	    	 * @param v
+	    	 * Save the maze to file for later reuse
+	    	 */
+            public void onClick(View v) {
+            	Maze maze = GlobalMaze.maze;
+            	Log.v(tag, "saving maze to file. ");
+            	Context context = getApplicationContext();
+            	String file = context.getFilesDir().getAbsolutePath() + "/maze" + maze.skill_level + ".xml";
+            	Log.v(tag, Integer.toString(maze.f.c1));
+            	Log.v(tag, Integer.toString(maze.f.c2));
+            	Log.v(tag, Integer.toString(maze.f.c3));
+            	MazeFileWriter.store(file, maze.mazew, maze.mazeh, 
+            			maze.mazebuilder.rooms, maze.mazebuilder.expectedPartiters, maze.rootnode, maze.mazecells, maze.mazedists.getDists(), maze.mazebuilder.startx, 
+            			maze.mazebuilder.starty, maze.endx, maze.endy,maze.f.c1,maze.f.c2,maze.f.c3);
+            	Log.v(tag, file + " saved! ");
+			}
+		});
+	
+	    Button restart = (Button) findViewById(R.id.restart);
+	    restart.setOnClickListener(new View.OnClickListener() {
+	    	
+	    	/**
+	    	 * Method name: onClick
+	    	 * Pressing the back button returns to State Title
+	    	 */
+            public void onClick(View v) {
+            	Log.v(tag, "restart maze... ");
+            	Context activity = getApplicationContext();
+            	Intent intent = new Intent(activity, AMazeActivity.class);
+            	startActivity(intent);
+			}
+		});
+	
+	}
+	
+	/**
+	 * Method: onCreateOptionsMenu- Inflate the menu; this adds items to the action bar if it is present.
+	 * @param: menu
+	 * @return true
+	 */
+	@Override 
+	public boolean onCreateOptionsMenu(Menu menu) {
+		// Inflate the menu; this adds items to the action bar if it is present.
+		getMenuInflater().inflate(R.menu.finish, menu);
+		return true;
+	}
+
+	
+	/**
+	 * Method: onOptionsItemSelected
+	 * @param: MenuItem
+	 * @return: true or anOptionItemSelected(item): If the user's action was not recognized invoke the 
+	 * superclass to handle it. 
+	 * User choose the "Settings" item, show the app settings UI...Handle action bar item clicks here.
+	 * The action bar will automatically handle clicks on the Home/Up button, so long as you specify a 
+	 * parent activity in AndroidManifest.xml.
+	 */
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		// Handle action bar item clicks here. The action bar will
+		// automatically handle clicks on the Home/Up button, so long
+		// as you specify a parent activity in AndroidManifest.xml.
+		int id = item.getItemId();
+		if (id == R.id.action_settings) {
+			return true;
+		}
+		return super.onOptionsItemSelected(item);
+	}
+
+}

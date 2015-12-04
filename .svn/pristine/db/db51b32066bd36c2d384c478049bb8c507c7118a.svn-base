@@ -1,0 +1,204 @@
+package edu.wm.cs.cs301.chaoranwei.falstad;
+
+import android.annotation.SuppressLint;
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Paint.FontMetrics;
+import android.graphics.Paint.Style;
+import android.graphics.Path;
+import android.graphics.RectF;
+import android.util.AttributeSet;
+import android.view.View;
+
+/**
+ * The GraphicsWrapper class subclasses MazePanel
+ * To isolate the graphics as much as possible, move graphics as much as possible into this single class
+ * and all functionality that requires objects from AWT into this class. I.E. the buffer image, fonts, 
+ * graphics objects are attributes of this class. This way other classes in Falstad do not use 
+ * java.awt.Graphics.
+ * 
+ * @author nadiaaly & Chaoran Wei
+ *
+ */
+public class GraphicsWrapper extends View {
+	
+	private Bitmap bufferImage ;
+	private Canvas gc;
+    Paint col;
+	
+	enum font {
+		largeBannerFont, smallBannerFont, 
+	}
+	
+	public enum color {
+		black, blue, white, yellow, darkGray, red, gray, green, orange;
+	}
+	
+
+	public GraphicsWrapper(Context context, AttributeSet attrs) {
+		super(context, attrs);
+		initBufferImage();
+		gc = new Canvas(bufferImage);
+		col = new Paint();
+	}
+	
+	
+	/**
+	 * For regular graphics
+	 * setColor takes enumerated object color as a parameter and sets the color of graphic
+	 * options: black, blue, white, yellow, darkGrey, red, gray, green, prange
+	 * @param color
+	 */
+	public void setColor(color color) {
+		switch(color){
+		case black:
+			col.setColor(Color.BLACK);
+			break;
+		case blue:
+			col.setColor(Color.BLUE);
+			break;
+		case white:
+			col.setColor(Color.WHITE);
+			break;
+		case yellow:
+			col.setColor(Color.YELLOW);
+			break;
+		case darkGray:
+			col.setColor(Color.DKGRAY);
+			break;
+		case red:
+			col.setColor(Color.RED);
+			break;
+		case gray:
+			col.setColor(Color.GRAY);
+			break;
+		case green:
+			col.setColor(Color.GREEN);
+			break;
+		case orange:
+			col.setARGB(255, 244, 164, 96);
+			break;
+		}
+	}
+	
+	/**
+	 * For seg.java file
+	 * setColor takes enumerated object color1 as a parameter and sets the color of graphic
+	 * options of RGB instead of all the enumerations
+	 * @param color
+	 */
+	public void setColor(int a, int b, int c){
+		col.setARGB(255, a, b, c);
+	}
+	
+	/**
+	 * Fills rectangles
+	 * @param x
+	 * @param y
+	 * @param width
+	 * @param height
+	 */
+	public void fillRect(int x, int y, int width, int height) {
+		//gc.drawRect(x, y, width, height, col);
+		gc.drawRect(x, y, x + width, y + height, col);
+	}   
+
+	/**
+	 * fills polygon
+	 * @param xps
+	 * @param yps
+	 * @param i
+	 */
+	public void fillPolygon(int[] x, int[] y, int i) {
+		col.setStyle(Style.FILL);
+
+		Path wallpath = new Path();
+		wallpath.reset(); 
+		wallpath.moveTo(x[0], y[0]); 
+		for ( i = 1; i < x.length; i++) {
+			wallpath.lineTo(x[i], y[i]);
+		}
+		wallpath.lineTo(x[0], y[0]); 
+
+		gc.drawPath(wallpath, col);
+	}
+	
+	/**
+	 * Fills oval shape
+	 * @param x
+	 * @param y
+	 * @param width
+	 * @param height
+	 */
+	@SuppressLint("NewApi")
+	public void fillOval(int x, int y, int width, int height) {
+		RectF rectf = new RectF(x, y, x + width, y + height);
+		//RectF rectf = new RectF(x, y, width, height );
+		//gc.drawOval(x, y, x + width, y + height, col);
+		gc.drawOval(rectf, col);
+	}
+
+    /**
+     * Draws a line 
+     * @param x1
+     * @param y1
+     * @param x2
+     * @param y12
+     */
+	public void drawLine(int x1, int y1, int x2, int y2) {
+		gc.drawLine(x1, y1, x2, y2, col);
+	}
+	
+	/**
+	 * Set the font style. Here set font to TimesRoman, Bold, size 48
+	 * & TimesRoman, Bold, 16. These are used in the GUI. 
+	 * @param f
+	 */
+	public void setFont(font f) {
+		//if (f == font.largeBannerFont) {
+		//	gc.setFont(new Font("TimesRoman", Font.BOLD, 48));
+		//} else {
+		//	gc.setFont(new Font("TimesRoman", Font.BOLD, 16));
+		//}
+	}
+
+	/***
+	 * Draws a type string given input of string and integer. Gets the font 
+	 * and given a width, delegates position
+	 * @param str
+	 * @param ypos
+	 */
+	public void drawString(String str, int ypos) {
+		//FontMetrics fm = col.getFontMetrics();
+		//gc.drawText(str, (Constants.VIEW_WIDTH-col.measureText(str))/2, ypos, col);
+		
+	}
+	
+	public void initBufferImage() {
+		bufferImage = Bitmap.createBitmap(Constants.VIEW_WIDTH, Constants.VIEW_HEIGHT, Bitmap.Config.ARGB_8888);
+		if (null == bufferImage)
+		{
+			System.out.println("Error: creation of buffered image failed, presumedly container not displayable");
+		}
+	}
+	
+	public Bitmap getBufferGraphics() {
+		if (null == bufferImage)
+			initBufferImage() ;
+		return bufferImage;
+
+	}
+	
+	public void update() {
+		gc.setBitmap(getBufferGraphics()) ;
+	}
+	
+	public void onDraw(Canvas c) {
+		gc = c;
+		super.onDraw(c);
+		c.drawBitmap(bufferImage,0,0,col);
+	}
+}

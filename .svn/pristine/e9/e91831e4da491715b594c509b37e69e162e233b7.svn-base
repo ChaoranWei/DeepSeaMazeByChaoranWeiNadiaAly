@@ -1,0 +1,128 @@
+package edu.wm.cs.cs301.chaoranwei.falstad;
+
+import edu.wm.cs.cs301.chaoranwei.falstad.GraphicsWrapper.color;
+import edu.wm.cs.cs301.chaoranwei.falstad.GraphicsWrapper.font;
+
+public class MazeView extends DefaultViewer {
+
+	Maze maze ; // need to know the maze model to check the state 
+	// and to provide progress information in the generating state
+	RobotDriver Driver;
+	
+	public MazeView(Maze m) {
+		super() ;
+		maze = m;
+	}
+	public void AddDriver(RobotDriver driver) {
+		Driver = driver;
+	}
+
+	@Override
+	public void redraw(GraphicsWrapper gc, int state, int px, int py, int view_dx,
+			int view_dy, int walk_step, int view_offset, RangeSet rset, int ang) {
+		//dbg("redraw") ;
+		switch (state) {
+		case Constants.STATE_TITLE:
+			redrawTitle(gc);
+			break;
+		case Constants.STATE_GENERATING:
+			redrawGenerating(gc);
+			break;
+		case Constants.STATE_PLAY:
+			// skip this one
+			break;
+		case Constants.STATE_FINISH:
+			redrawFinish(gc);
+			break;
+		case Constants.STATE_LOSE:
+			redrawLose(gc);
+			break;
+		}
+	}
+	
+	private void dbg(String str) {
+		System.out.println("MazeView:" + str);
+	}
+	
+	// 
+	
+	/**
+	 * Helper method for redraw to draw the title screen, screen is hardcoded
+	 * @param  gc graphics is the off screen image
+	 */
+	void redrawTitle(GraphicsWrapper gc) {
+		gc.setColor(color.white);
+		gc.fillRect(0, 0, Constants.VIEW_WIDTH, Constants.VIEW_HEIGHT);
+		gc.setFont(font.largeBannerFont);
+		gc.setColor(color.red);
+		centerString(gc, "MAZE", 100);
+		gc.setColor(color.blue);
+		gc.setFont(font.smallBannerFont);
+		centerString(gc, "by Paul Falstad", 150);
+		centerString(gc, "www.falstad.com", 175);
+		gc.setColor(color.black);
+	
+		//centerString(gc, fm, "v1.2", 350);
+	}
+	
+	
+	/**
+	 * Helper method for redraw to draw final screen, screen is hard coded
+	 * @param gc graphics is the off screen image
+	 */
+	void redrawFinish(GraphicsWrapper gc) {
+		gc.setColor(color.blue);
+		gc.fillRect(0, 0, Constants.VIEW_WIDTH, Constants.VIEW_HEIGHT);
+		gc.setFont(font.largeBannerFont);
+		gc.setColor(color.yellow);
+		centerString(gc, "You won!", 100);
+		gc.setColor(color.orange);
+		gc.setFont(font.smallBannerFont);
+		centerString(gc, "Congratulations!", 160);
+		centerString(gc, "Energy consumed: " + Driver.getEnergyConsumption(), 190);
+		gc.setColor(color.green);
+		centerString(gc, "Total length of path: " + Driver.getPathLength(), 220);
+		gc.setColor(color.green);
+		centerString(gc, "Hit any key to restart", 300);
+	}
+	
+	void redrawLose(GraphicsWrapper gc) {
+		gc.setColor(color.blue);
+		gc.fillRect(0, 0, Constants.VIEW_WIDTH, Constants.VIEW_HEIGHT);
+		gc.setFont(font.largeBannerFont);
+		gc.setColor(color.yellow);
+		centerString(gc, "You Lose!", 100);
+		gc.setColor(color.orange);
+		gc.setFont(font.smallBannerFont);
+		centerString(gc, "Energy consumed: " + Driver.getEnergyConsumption(), 190);
+		gc.setColor(color.green);
+		centerString(gc, "Total length of path: " + Driver.getPathLength(), 220);
+		gc.setColor(color.green);
+		centerString(gc, "Hit any key to restart", 300);
+	}
+
+	/**
+	 * Helper method for redraw to draw screen during phase of maze generation, screen is hard coded
+	 * only attribute percentdone is dynamic
+	 * @param gc graphics is the off screen image
+	 */
+	void redrawGenerating(GraphicsWrapper gc) {
+		gc.setColor(color.yellow);
+		gc.fillRect(0, 0, Constants.VIEW_WIDTH, Constants.VIEW_HEIGHT);
+		gc.setFont(font.largeBannerFont);
+		gc.setColor(color.red);
+		centerString(gc, "Building maze", 150);
+		gc.setFont(font.smallBannerFont);
+		gc.setColor(color.black);
+		centerString(gc, maze.getPercentDone()+"% completed", 200);
+		centerString(gc, "Hit escape to stop", 300);
+		centerString(gc, "If generation makes no progress, ", 320);
+		centerString(gc, "please reenter your skill level", 340);
+	}
+	
+	private void centerString(GraphicsWrapper g, String str, int ypos) {
+		g.drawString(str, ypos);
+	}
+
+
+}

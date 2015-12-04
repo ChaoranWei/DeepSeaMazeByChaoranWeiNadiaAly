@@ -1,0 +1,392 @@
+package edu.wm.cs.cs301.chaoranwei.ui;
+
+import java.io.File;
+import java.io.InputStream;
+
+import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
+import android.os.Bundle;
+import android.os.Handler;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.Spinner;
+import android.widget.TextView;
+import edu.wm.cs.cs301.chaoranwei.falstad.Constants;
+import edu.wm.cs.cs301.chaoranwei.falstad.Distance;
+import edu.wm.cs.cs301.chaoranwei.falstad.GlobalMaze;
+import edu.wm.cs.cs301.chaoranwei.falstad.Maze;
+import edu.wm.cs.cs301.chaoranwei.falstad.MazeFileReader;
+import android.widget.ProgressBar;
+
+/**
+ * The GeneratingActivity class is for the state generating. It is primarily an intermediate page
+ * that shows the progress of the maze generation algorithm and informs a user of progress. Once
+ * the generation algorithm is finished and the user presses the Play button, the display switches 
+ * to State Play. The Navigation allows for: Pressing back button to stop the maze generation and 
+ * return to State Title, Pressing the play button moves to the PlayActivity once the maze 
+ * generation is finished.
+ * Provide options for the user to select of one of the following ways to operate the robot:
+ * a) Manual (default), b) CuriousMouse, c) Wall Follower, d) Wizard. 
+ * Let the user choose to show the maze from top, to show the currently visible walls, to show the 
+ * way to the exit.
+ * @author Chaoran Wei and Nadia Aly
+ *
+ */
+public class GeneratingActivity extends Activity{
+	private String driver;
+	private ProgressBar progress;
+	private int skill;
+	private String algorithm;
+	private String perspective;
+	private String tag = "GeneratingActivity";
+	private Handler mHandler = new Handler();
+	private int ProgressStatus = 0;
+	TextView textView;
+	Thread thread;
+	Maze maze;
+	InputStream stream;
+	File f;
+	Context context = this;
+	boolean goback = false;
+	Intent intent;
+	Bundle bundle;
+	String Music;
+
+	/**
+	 * Method name: onCreate
+	 * @param: savedInstanceState
+	 * This is the main method in the class. Display progress bar to show how much of the maze has been
+	 * generated or loaded. * Provide options for the user to select of one of the following ways to operate the robot:
+	 * a) Manual (default), b) CuriousMouse, c) Wall Follower, d) Wizard. 
+	 * Let the user choose to show the maze from top, to show the currently visible walls, to show the 
+	 * way to the exit. 
+	 */
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.activity_generating);
+		if (savedInstanceState == null) {
+		    Bundle extras = getIntent().getExtras();
+		    if(extras == null) {
+		        skill= -1;
+		        algorithm = " ";
+		    } else {
+		        skill= extras.getInt("skill");
+		        algorithm = extras.getString("algorithm");
+		    }
+		} else {
+		    skill= savedInstanceState.getInt("skill");
+		    algorithm= savedInstanceState.getString("algorithm");
+		}
+		Log.v(tag, "Got intent. ");
+		Log.v(tag, "skill is" + Integer.toString(skill));
+		Log.v(tag, "algorithm is " + algorithm);
+		progress = (ProgressBar) findViewById(R.id.generating_progress);
+		textView = (TextView) findViewById(R.id.progress_text);
+        Log.v(tag, "Set progress bar. ");
+		//driver
+		Spinner spinner1 = (Spinner) findViewById(R.id.start_spinner1);
+		ArrayAdapter<CharSequence> adapter1 = ArrayAdapter.createFromResource(this,
+            R.array.drivers_array, android.R.layout.simple_spinner_item);
+		adapter1.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		spinner1.setAdapter(adapter1);
+    
+		spinner1.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener(){
+			
+			/**
+			 * method name: onItemSelected
+			 * Return the position of the currently selected item within the adapter's data set
+			 * 
+			 */
+			@Override
+			public void onItemSelected(AdapterView<?> parent, View view, int pos, long id){
+			driver = parent.getItemAtPosition(pos).toString();
+			Log.v(tag, "Driver: " + driver);
+				}
+			
+			/**
+			 * method name: onNothingSelected
+			 * In the maze generating state the user can pick which way to operate the robot. Defaults
+			 * to manual if none selected. 
+			 */
+			@Override
+			public void onNothingSelected(AdapterView<?> parent){
+			driver = "Manual";
+			}
+		});
+		
+		Log.v(tag, "Set driver algorithm. ");
+		//perspective
+		Spinner spinner_perspective = (Spinner) findViewById(R.id.start_spinner2);
+		ArrayAdapter<CharSequence> adapter2 = ArrayAdapter.createFromResource(this,
+            R.array.perspective, android.R.layout.simple_spinner_item);
+		adapter2.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		spinner_perspective.setAdapter(adapter2);
+    
+		spinner_perspective.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener(){
+			
+			/**
+			 * method name: onItemSelected
+			 * @param parent
+			 * @param view
+			 * @param pos
+			 * @param id
+			 * input from: Let the user choose to show the maze from top, to show the currently visible walls, to show the way to the exit
+			 */
+			@Override
+			public void onItemSelected(AdapterView<?> parent, View view, int pos, long id){
+			    perspective = parent.getItemAtPosition(pos).toString();
+			    Log.v(tag, "perspective: " + perspective);
+				}
+			
+			/**
+			 * method name: onNothingSelected
+			 * @param: parent
+			 * show the maze from view: currently visible walls (defaults)
+			 */
+			@Override
+			public void onNothingSelected(AdapterView<?> parent){
+			perspective = "Visible walls";
+			}
+		});
+		Log.v(tag, "Set spinner for perspective. ");
+		
+	    Spinner music = (Spinner) findViewById(R.id.music);
+		ArrayAdapter<CharSequence> adapter3 = ArrayAdapter.createFromResource(this,
+            R.array.music, android.R.layout.simple_spinner_item);
+		adapter3.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		music.setAdapter(adapter3);
+    
+		music.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener(){
+			
+			/**
+			 * method name: onItemSelected
+			 * @param parent
+			 * @param view
+			 * @param pos
+			 * @param id
+			 * input from: Let the user choose to show the maze from top, to show the currently visible walls, to show the way to the exit
+			 */
+			@Override
+			public void onItemSelected(AdapterView<?> parent, View view, int pos, long id){
+			    Music = parent.getItemAtPosition(pos).toString();
+			    Log.v(tag, "perspective: " + perspective);
+				}
+			
+			/**
+			 * method name: onNothingSelected
+			 * @param: parent
+			 * show the maze from view: currently visible walls (defaults)
+			 */
+			@Override
+			public void onNothingSelected(AdapterView<?> parent){
+			perspective = "Visible walls";
+			}
+		});
+		Log.v(tag, "Set spinner for perspective. ");
+		
+		//play button
+		 Button play_button = (Button) findViewById(R.id.play_button);
+		    play_button.setOnClickListener(new View.OnClickListener() {
+		    	/**
+				 * execute the action when item is clicked
+				 */
+	            @Override
+				public void onClick(View v) {
+
+	    			if (progress.getProgress() == 100) {
+	    				Context activity = getApplicationContext();
+	    	            intent = new Intent(context, PlayActivity.class);
+	    				bundle = new Bundle();
+		    			bundle.putInt("skill", skill);
+		    			bundle.putString("driver", driver);
+		    			bundle.putString("perspective", perspective);
+		    			bundle.putString("music", Music);
+		    			intent.putExtras(bundle);
+	    				Log.v(tag, "begin playing. ");
+	    				startActivity(intent);
+	    			} else {
+	    				Log.v(tag, "Generating process not completed. ");
+	    				Log.v(tag, Integer.toString(progress.getProgress()));
+	    			}
+				}
+			});
+		    
+		Log.v(tag, "Set start button. ");
+		//back button
+		Button back_button = (Button) findViewById(R.id.back_button);
+		back_button.setOnClickListener(new View.OnClickListener() {
+			/**
+			 * execute the action when item is clicked
+			 */
+	        @Override
+			public void onClick(View v) {
+	        	goback = true;
+	            Context activity = getApplicationContext();
+	            Intent intent = new Intent(activity, AMazeActivity.class);
+	            Log.v(tag, "Going back to title. ");
+	            startActivity(intent);
+			}
+		});
+		
+		Log.v(tag, "Set go back button. ");
+		LoadFile();
+		Log.v(tag, "Begin loading file or generating maze. ");
+	}
+	
+	private void LoadFile() {
+		new Thread(new Runnable(){
+			@Override
+			public void run() {
+				Log.v(tag, "load maze of size" + skill);
+				maze = new Maze();
+			    GlobalMaze.maze = maze;
+				maze.init();
+				if (algorithm.equals("load file")) {
+					try {
+					Context context = getApplicationContext();
+					String filename = context.getFilesDir().getAbsolutePath() + "/maze" + skill + ".xml";
+					f=new File(filename); 
+					Log.v(tag, "get file");
+					MazeFileReader file = new MazeFileReader(f.getPath()) ;
+					Log.v(tag, "file read");
+					maze.setHeight(file.getHeight()) ;
+					maze.setWidth(file.getWidth()) ;
+					Distance d = new Distance(file.getDistances()) ;
+					maze.endx = file.getEndX();
+					maze.endy = file.getEndY();
+					Log.v(tag, "parameters got");
+					maze.newMaze(file.getRootNode(),file.getCells(),d,file.getStartX(), file.getStartY()) ;
+					maze.flag = true;
+					Log.v(tag, "new maze got");
+		            maze.c1 = file.getC1();
+		            maze.c2 = file.getC2();
+		            maze.c3 = file.getC3();
+		     
+					Log.v(tag, "load " + filename);
+					progress.setProgress(100);
+					}
+					catch (Exception e ) {
+						Log.v(tag, "generating maze instead");
+						maze.flag = false;
+						BuildMaze(); 
+						return;
+					}
+				}
+				
+				else {
+					BuildMaze();
+					return;
+				}
+				
+			}
+		}).start();
+	}
+	
+    private void BuildMaze() {
+		//maze.getPanel().update();
+		
+		mHandler.post(new Runnable(){
+			@Override
+			public void run() {
+				progress.setProgress(0);
+			}
+		});
+		
+		if (algorithm.equals("BackTracking")){
+			maze.method = 0;
+		}
+		else if (algorithm.equals("Eller\'s Algorithm")){
+			maze.method = 2;
+		}
+		else if (algorithm.equals("Prim\'s Algorithm")){
+			maze.method = 1;
+		} else {
+			maze.method = 0;
+		}
+		
+		try{
+			maze.build(skill, maze.method);
+			}
+			catch(Exception e){
+				e.printStackTrace();
+			}
+		
+		new Thread(new Runnable(){
+
+			@Override
+			public void run() {
+				while (goback == false && progress.getProgress() != 100){
+					try {
+						Thread.sleep(100);
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					mHandler.post(new Runnable(){
+						@Override
+						public void run() {
+							progress.setProgress(maze.percentdone);
+							textView.setText(maze.percentdone +"/"+progress.getMax());
+							Log.v(tag, "Current Progress is " + maze.percentdone);
+							
+						}
+					});
+					
+					if (maze.state == Constants.STATE_PLAY) {
+						Log.v(tag, "Final progress: " + progress.getProgress());
+						Log.v(tag, Integer.toString(maze.mazeh));
+						Context context = getApplicationContext();
+						intent = new Intent(context, PlayActivity.class);
+						bundle = new Bundle();
+						break;
+					}
+					if (goback == true) {
+						Thread.currentThread().interrupt();
+						maze.mazebuilder.interrupt();
+						Log.v(tag, "going back to title. ");
+						break;
+					}
+					
+				}
+			}
+		}).run();
+	}
+	
+	/**
+	 * Method: onCreateOptionsMenu- Inflate the menu; this adds items to the action bar if it is present.
+	 * @param: menu
+	 * @return true
+	 */
+	@Override 
+	public boolean onCreateOptionsMenu(Menu menu) {
+		// Inflate the menu; this adds items to the action bar if it is present.
+		getMenuInflater().inflate(R.menu.generating, menu);
+		return true;
+	}
+
+	/**
+	 * Method name: anOptionsItemSelect
+	 * @param: item
+	 * @returns: true
+	 * This method Handles the action bar item clicks here. The action bar will automatically 
+	 * handle clicks on the Home/Up button, so long as you specify a parent activity in AndroidManifest.xml.
+	 */
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		// Handle action bar item clicks here. The action bar will
+		// automatically handle clicks on the Home/Up button, so long
+		// as you specify a parent activity in AndroidManifest.xml.
+		int id = item.getItemId();
+		if (id == R.id.action_settings) {
+			return true;
+		}
+		return super.onOptionsItemSelected(item);
+	}
+}

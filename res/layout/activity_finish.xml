@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/shark" >
+
+    <Button
+        android:id="@+id/restart"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:layout_marginBottom="35dp"
+        android:layout_marginRight="16dp"
+        android:text="restart" />
+
+    <Button
+        android:id="@+id/save_maze"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/restart"
+        android:layout_alignBottom="@+id/restart"
+        android:layout_alignParentLeft="true"
+        android:text="save maze" />
+
+    <TextView
+        android:id="@+id/energy_and_path"
+        android:layout_width="195dp"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_toLeftOf="@+id/restart"
+        android:text="energy"
+        android:textColor="#FF0000"
+        android:textSize="15dp" />
+
+    <TextView
+        android:id="@+id/win"
+        android:layout_width="195dp"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="49dp"
+        android:text="@string/win"
+        android:textColor="#FFffff"
+        android:fontFamily = "sans-serif" 
+        android:textSize="40dp" />
+
+    <TextView
+        android:id="@+id/lose"
+        android:layout_width="195dp"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/win"
+        android:layout_alignBottom="@+id/win"
+        android:layout_alignLeft="@+id/win"
+        android:text="@string/lose"
+        android:textColor="#ffffff"
+        android:fontFamily = "sans-serif"
+        android:textSize="40dp" />
+    
+    <TextView
+        android:id="@+id/hitwall"
+        android:layout_width="195dp"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/win"
+        android:layout_alignBottom="@+id/win"
+        android:layout_alignLeft="@+id/win"
+        android:text="You hit wall!"
+        android:textColor="#FFffff"
+        android:fontFamily = "sans-serif"
+        android:textSize="40dp" />
+    
+
+</RelativeLayout>

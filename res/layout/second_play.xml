@@ -1,0 +1,15 @@
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    >
+   
+    <edu.wm.cs.cs301.chaoranwei.falstad.GraphicsWrapper
+        android:id="@+id/panel"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:background="#666666" />
+    
+    <include android:id="@+id/relative" layout="@layout/activity_play" />
+    
+</FrameLayout>

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item type="id" name="seekbar" />
+    <item type="id" name="textView" />
+    <item type="id" name="start_button" />
+    <item type="id" name="start_spinner" />
+    <item type="id" name="start_spinner1" />
+    <item type="id" name="start_spinner2" />
+    <item type="id" name="play_button" />
+    <item type="id" name="back_button" />
+    <item type="id" name="generating_progress" />
+    <item type="id" name="energy_progress" />
+    <item type="id" name="toggle" />
+    <item type="id" name="restart" />
+    <item type="id" name="save_maze" />
+    <item type="id" name="restartFromPlay" />
+    <item type="id" name="start_driver" />
+    <item type="id" name="pause" />
+    <item type="id" name="shortCut" />
+    <item type="id" name="shortCut_lose" />
+    <item type="id" name="shortCut_lose_hit" />
+    <item type="id" name="Up" />
+    <item type="id" name="Down" />
+    <item type="id" name="Left" />
+    <item type="id" name="Right" />
+    <item type="id" name="skill_level" />
+    <item type="id" name="welcome" />
+     <item type="id" name="win" />
+     <item type="id" name="lose" />
+     <item type="id" name="visiblewall" />
+     <item type="id" name="solution" />
+     <item type="id" name="topdown" />
+     <item type="id" name="progress_text" />
+     <item type="id" name="energy_text" />
+     <item type="id" name="hitwall" />
+     <item type="id" name="panel" />
+     <item type="id" name="relative" />
+     <item type="id" name="music" />
+    
+    
+    <item type="menu" name="generating" />
+    <item type="menu" name="play" />
+    <item type="menu" name="finish" />
+    
+</resources>

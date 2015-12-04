@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".FinishActivity" >
+
+    <Button
+        android:id="@+id/topdown"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/visiblewall"
+        android:layout_alignBottom="@+id/visiblewall"
+        android:layout_toLeftOf="@+id/visiblewall"
+        android:text="top down" />
+
+    <Button
+        android:id="@+id/visiblewall"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/energy_progress"
+        android:layout_centerHorizontal="true"
+        android:text="visible wall" />
+
+    <Button
+        android:id="@+id/solution"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/visiblewall"
+        android:layout_alignBottom="@+id/visiblewall"
+        android:layout_toRightOf="@+id/visiblewall"
+        android:text="solution" />
+
+    <ProgressBar
+        android:id="@+id/energy_progress"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_alignRight="@+id/solution"
+        android:minHeight="50dp"
+        android:minWidth="100dp" />
+
+     <Button
+         android:id="@+id/pause"
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+         android:layout_alignParentBottom="true"
+         android:layout_alignRight="@+id/solution"
+         android:text="pause" />
+
+     <Button
+         android:id="@+id/Up"
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+         android:layout_above="@+id/Left"
+         android:layout_alignLeft="@+id/Down"
+         android:background="@drawable/up_arrow" />
+
+     <Button
+         android:id="@+id/Right"
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+         android:layout_above="@+id/pause"
+         android:layout_toRightOf="@+id/Down"
+         android:background="@drawable/arrow_right" />
+
+     <Button
+         android:id="@+id/start_driver"
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+         android:layout_alignParentLeft="true"
+         android:layout_below="@+id/Down"
+         android:text="start driver" />
+
+     <Button
+         android:id="@+id/Left"
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+         android:layout_above="@+id/start_driver"
+         android:layout_toLeftOf="@+id/Down"
+         android:background="@drawable/arrow_left" />
+
+     <Button
+         android:id="@+id/Down"
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+         android:layout_above="@+id/pause"
+         android:layout_toRightOf="@+id/start_driver"
+         android:background="@drawable/arrow_down" />
+
+     <Button
+         android:id="@+id/restartFromPlay"
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+         android:layout_above="@+id/topdown"
+         android:layout_alignLeft="@+id/topdown"
+         android:text="restart" />
+
+     <TextView
+         android:id="@+id/energy_text"
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+         android:layout_alignBottom="@+id/energy_progress"
+         android:layout_alignRight="@+id/Up"
+         android:text="test"
+         android:textSize="18dp" />
+
+     <edu.wm.cs.cs301.chaoranwei.falstad.GraphicsWrapper
+         android:id="@+id/panel"
+         android:layout_width="wrap_content"
+         android:layout_height="match_parent"
+         android:layout_above="@+id/Up"
+         android:layout_alignParentLeft="true"
+         android:layout_below="@+id/topdown"
+         android:background="#666666" />
+
+</RelativeLayout>

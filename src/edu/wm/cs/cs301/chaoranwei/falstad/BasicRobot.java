@@ -1,0 +1,497 @@
+package edu.wm.cs.cs301.chaoranwei.falstad;
+
+
+
+
+public class BasicRobot implements Robot {
+	
+	//initialize parameters
+	private float battery;
+	private float initBattery;
+	private Maze RobotMaze;
+	private int level;
+	private int steps = 0;
+	
+	//public int[] currentDirection;Do I need something like this for the currentDirection the robot is facing
+	public boolean hitted = false;
+
+	
+	public BasicRobot(Maze maze){
+		setBatteryLevel(2500);
+		hitted = false;
+		RobotMaze = maze;
+	}
+
+	@Override
+	public Maze getMaze(){
+		return RobotMaze;
+	}
+/**
+	 * Turn robot on the spot. If robot runs out of energy, it stops and throws an Exception, 
+	 * which can be checked by hasStopped() == true and by checking the battery level. 
+	 * @param direction to turn to relative to current forward direction 
+	 * @throws Exception if the robot stops for lack of energy. 
+	 */
+	@Override
+	public void rotate(Turn turn) throws Exception {
+		if (!hasStopped()) {
+			if (turn == Turn.LEFT) {
+				battery -= 0.5 * getEnergyForFullRotation();
+				if (battery < 0) {
+					throw new Exception("Robot has run out of energy to complete rotation left");
+				}	
+				rotateLeft();
+			} else if (turn == Turn.RIGHT) {
+				battery -= 0.5 * getEnergyForFullRotation();
+				if (battery <  0) {
+					throw new Exception("Robot has run out of energy to complete rotation right");
+				}
+				rotateRight();
+			} else if (turn == Turn.AROUND) {
+				battery -= getEnergyForFullRotation();
+				if (battery < 0) {
+					throw new Exception("Robot has run out of energy to complete rotation around");
+				}
+				rotateAround();
+			}
+		 else return;
+		}
+		
+	}
+
+	
+	@Override
+	public void move(int distance) throws Exception {
+		if (distance < 0) {
+	             throw new Exception("Illegal distance " + distance);
+		}
+		if (distance == 0) {
+			return ;
+		}
+		// normal case
+		for(int i= 1; i <= distance; i++){
+			if (battery-getEnergyForStepForward() < 0) {
+				battery = battery - getEnergyForStepForward();
+				RobotMaze.state=Constants.STATE_LOSE;
+			    RobotMaze.notifyViewerRedraw();
+				throw new Exception("Robot does not have enough energy to make move");
+			}
+			if (RobotMaze.mazecells.hasWallOnLeft(RobotMaze.px,RobotMaze.py) && RobotMaze.dx == -1 && RobotMaze.dy == 0){
+				battery = battery - getEnergyForStepForward();
+				hitted = true;
+				RobotMaze.state=Constants.STATE_LOSE;
+			    RobotMaze.notifyViewerRedraw();
+				throw new Exception("Robot hits wall");
+			}
+			if (RobotMaze.mazecells.hasWallOnRight(RobotMaze.px,RobotMaze.py) && RobotMaze.dx == 1 && RobotMaze.dy == 0){
+				battery = battery - getEnergyForStepForward();
+				hitted = true;
+				RobotMaze.state=Constants.STATE_LOSE;
+			    RobotMaze.notifyViewerRedraw();
+				throw new Exception("Robot hits wall");
+			}
+			if (RobotMaze.mazecells.hasWallOnTop(RobotMaze.px,RobotMaze.py) && RobotMaze.dx == 0 && RobotMaze.dy == -1){
+				battery = battery - getEnergyForStepForward();
+				hitted = true;
+				RobotMaze.state=Constants.STATE_LOSE;
+			    RobotMaze.notifyViewerRedraw();
+				throw new Exception("Robot hits wall");
+			}
+			if (RobotMaze.mazecells.hasWallOnBottom(RobotMaze.px,RobotMaze.py) && RobotMaze.dx == 0 && RobotMaze.dy == 1){
+				hitted = true;
+				RobotMaze.state=Constants.STATE_LOSE;
+			    RobotMaze.notifyViewerRedraw();
+				throw new Exception("Robot hits wall");
+			}
+			else{
+				battery -= getEnergyForStepForward();//take energy from battery
+				RobotMaze.walk(1);
+				setSteps(getSteps() + 1);
+			}
+		}
+		
+	}
+		
+    		
+		    
+		
+	
+	private int getSteps() {
+		// TODO Auto-generated method stub
+		return steps;
+	}
+
+	/**
+	 * Provides the current position as (x,y) coordinates for the maze cell as an array of length 2 with [x,y].
+	 * @postcondition 0 <= x < width, 0 <= y < height of the maze. 
+	 * @return array of length 2, x = array[0], y=array[1]
+	 * @throws Exception if position is outside of the maze
+	 */
+	@Override
+	public int[] getCurrentPosition() throws Exception {
+		int[] position = {RobotMaze.px, RobotMaze.py};
+		if(0 > position[0] || position[0] >RobotMaze.mazew - 1 || 0> position[1] || position[1]> RobotMaze.mazeh - 1){
+		throw new Exception("The Current position is outside of maze bounds");
+		}
+		return position;
+	}
+
+	@Override
+	public void setMaze(Maze maze) {
+		assert(RobotMaze != null);//precondition
+		this.RobotMaze = maze; //how to make sure it is configured
+	}
+
+	@Override
+	public boolean isAtGoal() {
+		return RobotMaze.mazedists.isExitPosition(RobotMaze.px, RobotMaze.py); //outside maze or at exit
+	}
+
+	@Override
+	public boolean canSeeGoal(Direction direction) throws UnsupportedOperationException {
+		if(!hasDistanceSensor(direction))
+			throw new UnsupportedOperationException("Does not have distance sensor");
+		else if(distanceToObstacle(direction)==Integer.MAX_VALUE){
+			return true;
+		}
+		return false;
+}
+
+
+	/**
+	 * Tells if current position is inside a room. 
+	 * @return true if robot is inside a room, false otherwise
+	 * @throws UnsupportedOperationException 
+	 */
+	@Override
+	public boolean isInsideRoom() throws UnsupportedOperationException{
+	 try {
+			return RobotMaze.mazecells.isInRoom(RobotMaze.px,RobotMaze.py);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}//I'm not sure how to fix this to throw exception
+	return false;
+		
+	}
+	
+	@Override
+	public boolean hasRoomSensor() {
+		return true;
+	}
+
+	@Override
+	public int[] getCurrentDirection() {
+		int[] directionList = new int[2];
+		directionList[0] = RobotMaze.dx;
+		directionList[1] = RobotMaze.dy;
+		return directionList;
+	}
+
+	@Override
+	public float getBatteryLevel() {
+		// TODO Auto-generated method stub
+		return battery;
+	}
+
+	@Override
+	public void setBatteryLevel(float level) {
+		assert(level >=0);
+		battery = (float) level;
+	}
+	
+	
+	@Override
+	public float getEnergyForFullRotation() {
+		// TODO Auto-generated method stub
+		return 6;
+	}
+
+	@Override
+	public float getEnergyForStepForward() {
+		// TODO Auto-generated method stub
+		return 5;
+	}
+
+	@Override
+	public boolean hasStopped() {
+		if (hitted == true) {
+			RobotMaze.state = Constants.STATE_LOSE;
+			return true;
+		} else if (battery <= 0) {
+			RobotMaze.state = Constants.STATE_LOSE;
+			return true;
+		}
+		return false;
+	}
+
+	@Override
+	public int distanceToObstacle(Direction direction) throws UnsupportedOperationException {
+		int toObstacle=0;
+
+		//System.out.println(00);
+		if(!hasDistanceSensor(direction))
+			throw new UnsupportedOperationException("Does not have distance sensor");
+		if(battery-1 <0){
+			throw new UnsupportedOperationException ("Not sufficient Energy to operate distance Sensor, battery is out");
+		}
+		else{
+			int[] curPosition = null;
+			try {
+				curPosition = getCurrentPosition();
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				return -1;
+			}
+			battery-=1;
+			// ----> 
+			//Here, I use temporary values so the view is not updated in the maze application
+			//
+			int[] curDirection = getCurrentDirection();
+
+			if(direction==Direction.RIGHT){
+				if (curDirection[0] == 0 && curDirection[1] == 1) {
+
+		    		while(!RobotMaze.mazecells.hasWallOnRight(curPosition[0],curPosition[1])){
+		    			if(RobotMaze.mazedists.isExitPosition(curPosition[0], curPosition[1])){
+							return Integer.MAX_VALUE;
+			    			}
+						curPosition[0]+=1;
+						toObstacle+=1;
+						}
+					}
+				if (curDirection[0] == 0 && curDirection[1] == -1) {
+
+		    		while(!RobotMaze.mazecells.hasWallOnLeft(curPosition[0],curPosition[1])){
+		    			if(RobotMaze.mazedists.isExitPosition(curPosition[0], curPosition[1])){
+							return Integer.MAX_VALUE;
+			    			}
+						curPosition[0]-=1;
+						toObstacle+=1;
+						}
+					}
+				if (curDirection[0] == 1 && curDirection[1] == 0) {
+		    		while(!RobotMaze.mazecells.hasWallOnTop(curPosition[0],curPosition[1])){
+		    			if(RobotMaze.mazedists.isExitPosition(curPosition[0], curPosition[1])){
+							return Integer.MAX_VALUE;
+			    			}
+						curPosition[1]-=1;
+						toObstacle+=1;
+						}
+					}
+				if (curDirection[0] == -1 && curDirection[1] == 0) {
+
+		    		while(!RobotMaze.mazecells.hasWallOnBottom(curPosition[0],curPosition[1])){
+		    			if(RobotMaze.mazedists.isExitPosition(curPosition[0], curPosition[1])){
+							return Integer.MAX_VALUE;
+			    			}
+						curPosition[1]+=1;
+						toObstacle+=1;
+						}
+					}
+			}
+		
+			else if(direction==Direction.LEFT){
+				if (curDirection[0] == 0 && curDirection[1] == 1) {
+
+		    		while(!RobotMaze.mazecells.hasWallOnLeft(curPosition[0],curPosition[1])){
+		    			if(RobotMaze.mazedists.isExitPosition(curPosition[0], curPosition[1])){
+							return Integer.MAX_VALUE;
+			    			}
+						curPosition[0]-=1;
+						toObstacle+=1;
+						}
+					}
+				if (curDirection[0] == 0 && curDirection[1] == -1) {
+
+		    		while(!RobotMaze.mazecells.hasWallOnRight(curPosition[0],curPosition[1])){
+		    			if(RobotMaze.mazedists.isExitPosition(curPosition[0], curPosition[1])){
+							return Integer.MAX_VALUE;
+			    			}
+						curPosition[0]+=1;
+						toObstacle+=1;
+						}
+					}
+				if (curDirection[0] == 1 && curDirection[1] == 0) {
+					//System.out.println(RobotMaze.mazecells.hasWallOnTop(curPosition[0],curPosition[1]));
+
+		    		while(!RobotMaze.mazecells.hasWallOnBottom(curPosition[0],curPosition[1])){
+		    			if(RobotMaze.mazedists.isExitPosition(curPosition[0], curPosition[1])){
+							return Integer.MAX_VALUE;
+			    			}
+						curPosition[1]+=1;
+						toObstacle+=1;
+						}
+					}
+				if (curDirection[0] == -1 && curDirection[1] == 0) {
+
+		    		while(!RobotMaze.mazecells.hasWallOnTop(curPosition[0],curPosition[1])){
+		    			if(RobotMaze.mazedists.isExitPosition(curPosition[0], curPosition[1])){
+							return Integer.MAX_VALUE;
+			    			}
+						curPosition[1]-=1;
+						toObstacle+=1;
+						}
+					}
+	    	}
+			else if(direction==Direction.FORWARD){
+				if (curDirection[0] == 0 && curDirection[1] == 1) {
+
+	    		while(!RobotMaze.mazecells.hasWallOnBottom(curPosition[0],curPosition[1])){
+	    			if(RobotMaze.mazedists.isExitPosition(curPosition[0], curPosition[1])){
+						return Integer.MAX_VALUE;
+		    			}
+					curPosition[1]+=1;
+					toObstacle+=1;
+					}
+				}
+				if (curDirection[0] == 0 && curDirection[1] == -1) {
+		    		while(!RobotMaze.mazecells.hasWallOnTop(curPosition[0],curPosition[1])){
+		    			if(RobotMaze.mazedists.isExitPosition(curPosition[0], curPosition[1])){
+							return Integer.MAX_VALUE;
+			    			}
+						curPosition[1]-=1;
+						toObstacle+=1;
+						}
+					}
+				if (curDirection[0] == 1 && curDirection[1] == 0) {
+					
+		    		while(!RobotMaze.mazecells.hasWallOnRight(curPosition[0],curPosition[1])){
+		    			if(RobotMaze.mazedists.isExitPosition(curPosition[0], curPosition[1])){
+							return Integer.MAX_VALUE;
+			    			}
+		    			
+						curPosition[0]+=1;
+						toObstacle+=1;
+						}
+					}
+				if (curDirection[0] == -1 && curDirection[1] == 0) {
+		    		while(!RobotMaze.mazecells.hasWallOnLeft(curPosition[0],curPosition[1])){
+		    			if(RobotMaze.mazedists.isExitPosition(curPosition[0], curPosition[1])){
+							return Integer.MAX_VALUE;
+			    			}
+						curPosition[0]-=1;
+						toObstacle+=1;
+						}
+					}
+
+			}
+			
+			else if(direction==Direction.BACKWARD){
+				if (curDirection[0] == 0 && curDirection[1] == 1) {
+		    		while(!RobotMaze.mazecells.hasWallOnTop(curPosition[0],curPosition[1])){
+		    			if(RobotMaze.mazedists.isExitPosition(curPosition[0], curPosition[1])){
+							return Integer.MAX_VALUE;
+			    			}
+						curPosition[1]-=1;
+						toObstacle+=1;
+						}
+					}
+				if (curDirection[0] == 0 && curDirection[1] == -1) {
+		    		while(!RobotMaze.mazecells.hasWallOnBottom(curPosition[0],curPosition[1])){
+		    			if(RobotMaze.mazedists.isExitPosition(curPosition[0], curPosition[1])){
+							return Integer.MAX_VALUE;
+			    			}
+						curPosition[1]+=1;
+						toObstacle+=1;
+						}
+					}
+				if (curDirection[0] == 1 && curDirection[1] == 0) {
+		    		while(!RobotMaze.mazecells.hasWallOnLeft(curPosition[0],curPosition[1])){
+		    			if(RobotMaze.mazedists.isExitPosition(curPosition[0], curPosition[1])){
+							return Integer.MAX_VALUE;
+			    			}
+						curPosition[0]-=1;
+						toObstacle+=1;
+						}
+					}
+				if (curDirection[0] == -1 && curDirection[1] == 0) {
+		    		while(!RobotMaze.mazecells.hasWallOnRight(curPosition[0],curPosition[1])){
+		    			if(RobotMaze.mazedists.isExitPosition(curPosition[0], curPosition[1])){
+							return Integer.MAX_VALUE;
+			    			}
+						curPosition[0]+=1;
+						toObstacle+=1;
+						}
+					}
+			
+				
+			
+	    	}
+			return toObstacle;
+			}
+
+	}
+
+	@Override
+	public boolean hasDistanceSensor(Direction direction) {
+		return true;
+	}
+	
+	
+	private void rotateLeft(){
+		RobotMaze.rotate(1);
+
+	}
+	
+	
+	private void rotateRight(){
+		RobotMaze.rotate(-1);
+		
+	}
+	
+	private void rotateAround(){
+		RobotMaze.rotate(1);
+		RobotMaze.rotate(1);
+
+	}
+	
+	public void setHittedFalse() {
+		hitted = false;
+	}
+
+	/**
+	 * Helper method to get the initial value of the battery because the battery is private field.
+	 * @return
+	 */
+	public float getInitBattery() {
+		return initBattery;
+	}
+
+	/**
+	 * Allow access to set the initial battery
+	 * @param initBattery
+	 */
+	public void setInitBattery(float initBattery) {
+		this.initBattery = initBattery;
+	}
+
+	/**
+	 * Allow access to find the level value (precondition level must be greater than 0 earlier)
+	 * @return
+	 */
+	public int getLevel() {
+		return level;
+	}
+
+	/**
+	 * Allow access to set the level of the maze (maybe this ability should not be there/ i.e. remove level
+	 * as field in basicRobot
+	 * 
+	 * @param level
+	 */
+	public void setLevel(int level) {
+		this.level = level;
+	}
+
+/**
+ * Sets the number of sets (intuitively, this should start at 0). 
+ * @param steps
+ */
+	public void setSteps(int steps) {
+		this.steps = steps;
+	}
+	
+	
+}
